@@ -209,12 +209,27 @@ export function useElectionData() {
         (contract) => contract.addCandidate(payload.name, payload.party, payload.manifesto, payload.imageUri),
         "Candidate added successfully."
       ),
+    deactivateCandidate: async (candidate) =>
+      runWrite(
+        (contract) =>
+          contract.updateCandidate(
+            candidate.id,
+            candidate.name,
+            candidate.party,
+            candidate.manifesto,
+            candidate.imageUri,
+            false
+          ),
+        "Candidate deactivated successfully."
+      ),
     registerVoter: async (voterAddress) =>
       runWrite((contract) => contract.registerVoter(voterAddress), "Voter registered successfully."),
     removeVoter: async (voterAddress) =>
       runWrite((contract) => contract.removeVoter(voterAddress), "Voter removed successfully."),
     grantRegistrar: async (walletAddress) =>
       runWrite((contract) => contract.grantRegistrar(walletAddress), "Registrar access granted."),
+    revokeRegistrar: async (walletAddress) =>
+      runWrite((contract) => contract.revokeRegistrar(walletAddress), "Registrar access revoked."),
     advanceState: async (nextState) =>
       runWrite((contract) => contract.advanceState(nextState), `Election moved to ${stateLabels[nextState]}.`),
     castVote: async (candidateId) =>

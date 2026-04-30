@@ -19,6 +19,8 @@ export function AdminPanel({
   onRegisterVoter,
   onRemoveVoter,
   onGrantRegistrar,
+  onRevokeRegistrar,
+  onDeactivateCandidate,
   onAdvanceState,
   onConnect,
 }) {
@@ -66,15 +68,15 @@ export function AdminPanel({
   return (
     <div className="admin-console">
       <section className="admin-status-strip">
-        <div>
+        <div className="access-item">
           <span className="live-pill"><span />{wallet ? "Admin Connected" : "Wallet Required"}</span>
           <strong>{shortAddress(wallet)}</strong>
         </div>
-        <div>
+        <div className="access-item">
           <span>Role</span>
           <strong>{isAdmin ? "Admin" : isRegistrar ? "Registrar" : "Viewer"}</strong>
         </div>
-        <div>
+        <div className="access-item">
           <span>Election State</span>
           <strong>{currentStateLabel}</strong>
         </div>
@@ -98,18 +100,27 @@ export function AdminPanel({
               </div>
             </div>
 
-            <div className="state-flow">
-              {stateLabels.map((label, index) => (
-                <div
-                  className={`state-step ${index === election.currentState ? "active" : ""} ${
-                    index < election.currentState ? "done" : ""
-                  }`}
-                  key={label}
-                >
-                  <span>{index < election.currentState ? <CheckCircle2 size={15} /> : index + 1}</span>
-                  <strong>{label}</strong>
-                </div>
-              ))}
+            <div className="state-flow" aria-label="Election lifecycle">
+              {stateLabels.map((label, index) => {
+                const isDone = index < election.currentState;
+                const isActive = index === election.currentState;
+                const isNext = index === nextStateIndex;
+
+                return (
+                  <button
+                    className={`state-step ${isActive ? "active" : ""} ${isDone ? "done" : ""} ${
+                      isNext ? "next" : ""
+                    }`}
+                    disabled={!isAdmin || !isNext}
+                    key={label}
+                    onClick={() => onAdvanceState(index)}
+                    type="button"
+                  >
+                    <span>{isDone ? <CheckCircle2 size={15} /> : index + 1}</span>
+                    <strong>{label}</strong>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="next-action-box">
@@ -125,27 +136,13 @@ export function AdminPanel({
             </div>
           </article>
 
-          <article className="admin-card summary-card">
-            <div className="summary-item">
-              <span>Total candidates</span>
-              <strong>{election.candidateCount}</strong>
-            </div>
-            <div className="summary-item">
-              <span>Total voters</span>
-              <strong>{election.registeredVoterCount}</strong>
-            </div>
-            <div className="summary-item">
-              <span>Current phase</span>
-              <strong>{currentStateLabel}</strong>
-            </div>
-          </article>
-
           <article className="admin-card">
             <div className="admin-card-header">
               <span className="section-icon"><ShieldCheck size={20} /></span>
               <div>
                 <span className="eyebrow">Access Control</span>
                 <h2>Registrar access</h2>
+                <p className="section-help">Grant registrar permission to wallets that can manage voter registration.</p>
               </div>
             </div>
             <div className="inline-form">
@@ -166,7 +163,19 @@ export function AdminPanel({
                 Grant
               </button>
             </div>
+            {!isAdmin ? (
+              <p className="permission-note">
+                Connect the admin wallet to enable registrar access.
+              </p>
+            ) : null}
             <div className="entity-list compact-list">
+              {trackedRegistrars.length ? (
+                <div className="table-heading">
+                  <span>Wallet</span>
+                  <span>Status</span>
+                  <span>Action</span>
+                </div>
+              ) : null}
               {trackedRegistrars.length ? (
                 trackedRegistrars.map((registrar) => (
                   <div className="entity-row" key={registrar}>
@@ -174,79 +183,117 @@ export function AdminPanel({
                       <strong>{shortAddress(registrar)}</strong>
                       <span>Granted this session</span>
                     </div>
-                    <span className="status-tag">Registrar</span>
+                    <div className="row-actions">
+                      <span className="status-tag">Registrar</span>
+                      <button
+                        className="danger-button slim-button"
+                        disabled={!isAdmin}
+                        onClick={() => {
+                          onRevokeRegistrar(registrar);
+                          setTrackedRegistrars((items) => items.filter((item) => item !== registrar));
+                          setInlineMessage("Registrar revoke submitted.");
+                        }}
+                      >
+                        Revoke
+                      </button>
+                    </div>
                   </div>
                 ))
               ) : (
-                <p className="empty-state">Granted registrar wallets will appear here during this session.</p>
+                <p className="empty-state compact-empty">No registrar wallets added in this session.</p>
               )}
             </div>
           </article>
         </div>
 
         <div className="admin-right-column">
-          <article className="admin-card">
+          <section className="management-panel">
             <div className="admin-card-header">
               <span className="section-icon"><Users size={20} /></span>
               <div>
                 <span className="eyebrow">Candidate Management</span>
-                <h2>Add candidate</h2>
+                <h2>Candidates</h2>
+                <p className="section-help">Add nominees and manage their active ballot status.</p>
               </div>
             </div>
-            <div className="form-grid compact-form">
-              <input
-                placeholder="Candidate name"
-                value={candidateForm.name}
-                onChange={(event) => setCandidateForm({ ...candidateForm, name: event.target.value })}
-              />
-              <input
-                placeholder="Party or group"
-                value={candidateForm.party}
-                onChange={(event) => setCandidateForm({ ...candidateForm, party: event.target.value })}
-              />
-              <textarea
-                placeholder="Manifesto"
-                value={candidateForm.manifesto}
-                onChange={(event) => setCandidateForm({ ...candidateForm, manifesto: event.target.value })}
-              />
-              <input
-                placeholder="Image URI (optional)"
-                value={candidateForm.imageUri}
-                onChange={(event) => setCandidateForm({ ...candidateForm, imageUri: event.target.value })}
-              />
-              <button
-                className="primary-button"
-                disabled={!canManageCandidates}
-                onClick={() => {
-                  onAddCandidate(candidateForm);
-                  setCandidateForm(initialCandidate);
-                  setInlineMessage("Candidate submission sent.");
-                }}
-              >
-                Add Candidate
-              </button>
-            </div>
-            <div className="entity-list">
-              {candidates.map((candidate) => (
-                <div className="entity-row" key={candidate.id}>
-                  <div>
-                    <strong>{candidate.name}</strong>
-                    <span>{candidate.party}</span>
-                  </div>
-                  <span className={candidate.active ? "status-tag" : "status-tag muted-tag"}>
-                    {candidate.active ? "Active" : "Inactive"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </article>
 
-          <article className="admin-card">
+            <div className="candidate-management-grid">
+              <div className="compact-form add-candidate-form">
+                <input
+                  placeholder="Candidate name"
+                  value={candidateForm.name}
+                  onChange={(event) => setCandidateForm({ ...candidateForm, name: event.target.value })}
+                />
+                <input
+                  placeholder="Party or group"
+                  value={candidateForm.party}
+                  onChange={(event) => setCandidateForm({ ...candidateForm, party: event.target.value })}
+                />
+                <textarea
+                  placeholder="Manifesto"
+                  value={candidateForm.manifesto}
+                  onChange={(event) => setCandidateForm({ ...candidateForm, manifesto: event.target.value })}
+                />
+                <input
+                  placeholder="Image URI (optional)"
+                  value={candidateForm.imageUri}
+                  onChange={(event) => setCandidateForm({ ...candidateForm, imageUri: event.target.value })}
+                />
+                <button
+                  className="primary-button"
+                  disabled={!canManageCandidates}
+                  onClick={() => {
+                    onAddCandidate(candidateForm);
+                    setCandidateForm(initialCandidate);
+                    setInlineMessage("Candidate submission sent.");
+                  }}
+                >
+                  Add Candidate
+                </button>
+              </div>
+
+              <div>
+                <div className="list-heading">
+                  <strong>Candidates ({candidates.length})</strong>
+                  <span>Active nominees</span>
+                </div>
+                <div className="entity-list candidate-list">
+                  {candidates.map((candidate) => (
+                    <div className="entity-row candidate-row" key={candidate.id}>
+                      <span className="candidate-avatar">{candidate.name.slice(0, 1)}</span>
+                      <div>
+                        <strong>{candidate.name}</strong>
+                        <span>{candidate.party}</span>
+                      </div>
+                      <div className="row-actions">
+                        <span className={candidate.active ? "status-tag" : "status-tag muted-tag"}>
+                          {candidate.active ? "Active" : "Inactive"}
+                        </span>
+                        <button
+                          className="danger-button slim-button"
+                          disabled={!canManageCandidates || !candidate.active}
+                          onClick={() => {
+                            onDeactivateCandidate(candidate);
+                            setInlineMessage("Candidate deactivation submitted.");
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="management-panel compact-management">
             <div className="admin-card-header">
               <span className="section-icon"><UserPlus size={20} /></span>
               <div>
                 <span className="eyebrow">Voter Management</span>
                 <h2>Registry</h2>
+                <p className="section-help">Register approved voter wallets before voting closes.</p>
               </div>
             </div>
             <div className="inline-form">
@@ -269,6 +316,13 @@ export function AdminPanel({
             </div>
             <div className="entity-list compact-list">
               {trackedVoters.length ? (
+                <div className="table-heading">
+                  <span>Wallet</span>
+                  <span>Status</span>
+                  <span>Action</span>
+                </div>
+              ) : null}
+              {trackedVoters.length ? (
                 trackedVoters.map((voter) => (
                   <div className="entity-row" key={voter}>
                     <div>
@@ -289,10 +343,10 @@ export function AdminPanel({
                   </div>
                 ))
               ) : (
-                <p className="empty-state">Registered voters will appear here after you add them in this session.</p>
+                <p className="empty-state compact-empty">No voter wallets added in this session.</p>
               )}
             </div>
-          </article>
+          </section>
 
         </div>
       </section>

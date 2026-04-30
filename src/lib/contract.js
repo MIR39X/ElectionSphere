@@ -17,6 +17,7 @@ export const CONTRACT_ABI = [
   "function advanceState(uint8 newState)",
   "function castVote(uint256 candidateId)",
   "function grantRegistrar(address account)",
+  "function revokeRegistrar(address account)",
   "function ELECTION_ADMIN_ROLE() view returns (bytes32)",
   "function REGISTRAR_ROLE() view returns (bytes32)",
   "function hasRole(bytes32 role,address account) view returns (bool)",

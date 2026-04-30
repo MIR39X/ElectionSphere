@@ -4,7 +4,7 @@ import { NavLink, Route, Routes } from "react-router-dom";
 import { AdminPanel } from "./components/AdminPanel";
 import { CandidateGrid } from "./components/CandidateGrid";
 import { DashboardView } from "./components/DashboardView";
-import { ResultsPanel } from "./components/ResultsPanel";
+import { ResultsView } from "./components/ResultsView";
 import { StatusBanner } from "./components/StatusBanner";
 import { useElectionData } from "./hooks/useElectionData";
 
@@ -32,6 +32,8 @@ function App() {
     registerVoter,
     removeVoter,
     grantRegistrar,
+    revokeRegistrar,
+    deactivateCandidate,
     advanceState,
     castVote,
   } = electionData;
@@ -107,6 +109,8 @@ function App() {
                 onRegisterVoter={registerVoter}
                 onRemoveVoter={removeVoter}
                 onGrantRegistrar={grantRegistrar}
+                onRevokeRegistrar={revokeRegistrar}
+                onDeactivateCandidate={deactivateCandidate}
                 onAdvanceState={advanceState}
                 onConnect={handleConnectWallet}
                 wallet={wallet}
@@ -307,13 +311,7 @@ function AdminPage({ wallet, onConnect, ...props }) {
 }
 
 function ResultsPage({ candidates, election, totals }) {
-  return (
-    <main className="page-stack">
-      <PageHeading eyebrow="Results" title="Live election results" text="View vote distribution, turnout, leading candidate, and final totals." />
-      <ResultsPanel candidates={candidates} election={election} totals={totals} />
-      <CandidateGrid candidates={candidates} canVote={false} hasVoted={false} isLoading={false} onVote={() => {}} />
-    </main>
-  );
+  return <ResultsView candidates={candidates} election={election} totals={totals} />;
 }
 
 function SetupPage({ wallet, isAdmin, isRegistrar, isRegistered, hasVoted, election, stateLabels, usingFallback, onSupportedChain }) {
