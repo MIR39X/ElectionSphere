@@ -139,6 +139,49 @@ export function AdminPanel({
               <strong>{currentStateLabel}</strong>
             </div>
           </article>
+
+          <article className="admin-card">
+            <div className="admin-card-header">
+              <span className="section-icon"><ShieldCheck size={20} /></span>
+              <div>
+                <span className="eyebrow">Access Control</span>
+                <h2>Registrar access</h2>
+              </div>
+            </div>
+            <div className="inline-form">
+              <input
+                placeholder="0x registrar wallet"
+                value={registrarAddress}
+                onChange={(event) => setRegistrarAddress(event.target.value)}
+              />
+              <button
+                className="primary-button"
+                disabled={!isAdmin}
+                onClick={() => {
+                  onGrantRegistrar(registrarAddress);
+                  setTrackedRegistrars((items) => trackUnique(items, registrarAddress));
+                  setInlineMessage("Registrar access submitted.");
+                }}
+              >
+                Grant
+              </button>
+            </div>
+            <div className="entity-list compact-list">
+              {trackedRegistrars.length ? (
+                trackedRegistrars.map((registrar) => (
+                  <div className="entity-row" key={registrar}>
+                    <div>
+                      <strong>{shortAddress(registrar)}</strong>
+                      <span>Granted this session</span>
+                    </div>
+                    <span className="status-tag">Registrar</span>
+                  </div>
+                ))
+              ) : (
+                <p className="empty-state">Granted registrar wallets will appear here during this session.</p>
+              )}
+            </div>
+          </article>
         </div>
 
         <div className="admin-right-column">
@@ -251,48 +294,6 @@ export function AdminPanel({
             </div>
           </article>
 
-          <article className="admin-card">
-            <div className="admin-card-header">
-              <span className="section-icon"><ShieldCheck size={20} /></span>
-              <div>
-                <span className="eyebrow">Access Control</span>
-                <h2>Registrar access</h2>
-              </div>
-            </div>
-            <div className="inline-form">
-              <input
-                placeholder="0x registrar wallet"
-                value={registrarAddress}
-                onChange={(event) => setRegistrarAddress(event.target.value)}
-              />
-              <button
-                className="primary-button"
-                disabled={!isAdmin}
-                onClick={() => {
-                  onGrantRegistrar(registrarAddress);
-                  setTrackedRegistrars((items) => trackUnique(items, registrarAddress));
-                  setInlineMessage("Registrar access submitted.");
-                }}
-              >
-                Grant
-              </button>
-            </div>
-            <div className="entity-list compact-list">
-              {trackedRegistrars.length ? (
-                trackedRegistrars.map((registrar) => (
-                  <div className="entity-row" key={registrar}>
-                    <div>
-                      <strong>{shortAddress(registrar)}</strong>
-                      <span>Granted this session</span>
-                    </div>
-                    <span className="status-tag">Registrar</span>
-                  </div>
-                ))
-              ) : (
-                <p className="empty-state">Granted registrar wallets will appear here during this session.</p>
-              )}
-            </div>
-          </article>
         </div>
       </section>
     </div>
