@@ -58,6 +58,19 @@ export async function switchToRequiredChain() {
   });
 }
 
+export async function revokeWalletPermissions() {
+  const ethereum = await getEthereum()
+  try {
+    await ethereum.request({
+      method: "wallet_revokePermissions",
+      params: [{ eth_accounts: {} }],
+    })
+  } catch {
+    // Some wallet versions may not support revoke permissions.
+    // In that case, disconnect still clears local app session.
+  }
+}
+
 export async function getElectionContract(withSigner = false) {
   if (!CONTRACT_ADDRESS) {
     throw new Error("VITE_CONTRACT_ADDRESS is missing. Add deployed contract address in .env.");

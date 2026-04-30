@@ -6,6 +6,7 @@ import {
   REQUIRED_CHAIN_NAME,
   connectWallet,
   getElectionContract,
+  revokeWalletPermissions,
   switchToRequiredChain,
 } from "../lib/contract";
 import { candidateSeed, defaultElection, stateLabels } from "../data/mockElection";
@@ -129,6 +130,18 @@ export function useElectionData() {
     }
   }
 
+  async function handleDisconnectWallet() {
+    await revokeWalletPermissions()
+    setWallet("")
+    setChainId(null)
+    setIsAdmin(false)
+    setIsRegistrar(false)
+    setIsRegistered(false)
+    setHasVotedState(false)
+    setNotice("Wallet disconnected. You can connect a different account.")
+    setError("")
+  }
+
   async function runWrite(action, successMessage) {
     if (usingFallback) {
       setNotice("Demo mode is active. Deploy contract and set VITE_CONTRACT_ADDRESS for live transactions.");
@@ -202,6 +215,7 @@ export function useElectionData() {
     onSupportedChain,
     explorerUrl: CONTRACT_ADDRESS ? `${BLOCK_EXPLORER_URL}/address/${CONTRACT_ADDRESS}` : "",
     handleConnectWallet,
+    handleDisconnectWallet,
     handleSwitchChain,
     refreshContractState,
     addCandidate: async (payload) =>

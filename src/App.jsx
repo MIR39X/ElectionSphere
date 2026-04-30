@@ -2,10 +2,10 @@ import { CheckCircle2, MousePointerClick, ShieldCheck, Wallet } from "lucide-rea
 import { createElement } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 import { AdminPanel } from "./components/AdminPanel";
-import { CandidateGrid } from "./components/CandidateGrid";
 import { DashboardView } from "./components/DashboardView";
 import { ResultsView } from "./components/ResultsView";
 import { StatusBanner } from "./components/StatusBanner";
+import { VoteView } from "./components/VoteView";
 import { useElectionData } from "./hooks/useElectionData";
 
 function App() {
@@ -27,6 +27,7 @@ function App() {
     onSupportedChain,
     explorerUrl,
     handleConnectWallet,
+    handleDisconnectWallet,
     handleSwitchChain,
     addCandidate,
     registerVoter,
@@ -38,14 +39,13 @@ function App() {
     castVote,
   } = electionData;
 
-  const canVote = Boolean(wallet) && isRegistered && election.currentState === 2;
-
   return (
     <div className="app-shell">
       <Navbar
         wallet={wallet}
         isLoading={isLoading}
         onSupportedChain={onSupportedChain}
+        onDisconnect={handleDisconnectWallet}
         onSwitchChain={handleSwitchChain}
       />
 
@@ -80,9 +80,8 @@ function App() {
           path="/vote"
           element={
             <WithStatus notice={notice} error={error} usingFallback={usingFallback} explorerUrl={explorerUrl}>
-              <VotePage
+              <VoteView
                 candidates={candidates}
-                canVote={canVote}
                 hasVoted={hasVoted}
                 isLoading={isLoading}
                 isRegistered={isRegistered}
@@ -91,6 +90,7 @@ function App() {
                 stateLabels={stateLabels}
                 onVote={castVote}
                 onConnect={handleConnectWallet}
+                onSupportedChain={onSupportedChain}
               />
             </WithStatus>
           }
@@ -147,7 +147,7 @@ function App() {
   );
 }
 
-function Navbar({ wallet, isLoading, onSupportedChain, onSwitchChain }) {
+function Navbar({ wallet, isLoading, onSupportedChain, onDisconnect, onSwitchChain }) {
   return (
     <header className="topbar">
       <NavLink to="/" className="brand">
@@ -170,6 +170,11 @@ function Navbar({ wallet, isLoading, onSupportedChain, onSwitchChain }) {
         {!onSupportedChain && wallet ? (
           <button className="secondary-button compact" onClick={onSwitchChain} disabled={isLoading}>
             Switch Network
+          </button>
+        ) : null}
+        {wallet ? (
+          <button className="secondary-button compact" onClick={onDisconnect} disabled={isLoading}>
+            Disconnect
           </button>
         ) : null}
       </div>
@@ -264,41 +269,6 @@ function DashboardPage({ election, totals, stateLabels, candidates, isAdmin, onA
       isAdmin={isAdmin}
       onAdvanceState={onAdvanceState}
     />
-  );
-}
-
-function VotePage({ candidates, canVote, hasVoted, isLoading, isRegistered, wallet, election, stateLabels, onVote, onConnect }) {
-  return (
-    <main className="page-stack">
-      <PageHeading eyebrow="Ballot" title="Cast your vote" text="Connect a registered voter wallet, wait for Voting Open, then submit one on-chain vote." />
-      <section className="grid two-up">
-        <article className="panel">
-          <div className="panel-header">
-            <span className="eyebrow">Eligibility</span>
-            <h2>Your voting status</h2>
-          </div>
-          <div className="status-list">
-            <StatusItem label="Wallet" value={wallet ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : "Not connected"} />
-            <StatusItem label="Registered voter" value={isRegistered ? "Yes" : "No"} />
-            <StatusItem label="Vote submitted" value={hasVoted ? "Yes" : "No"} />
-            <StatusItem label="Election state" value={stateLabels[election.currentState]} />
-          </div>
-        </article>
-        <article className="panel guidance-panel">
-          <span className="eyebrow">Next action</span>
-          <h2>{canVote ? "Choose a candidate below" : "Voting is not available yet"}</h2>
-          <p className="muted">
-            You need a connected wallet, voter registration, and the election state must be Voting Open.
-          </p>
-          {!wallet ? (
-            <button className="primary-button inline-action" onClick={onConnect}>
-              Connect MetaMask
-            </button>
-          ) : null}
-        </article>
-      </section>
-      <CandidateGrid candidates={candidates} canVote={canVote} hasVoted={hasVoted} isLoading={isLoading} onVote={onVote} />
-    </main>
   );
 }
 

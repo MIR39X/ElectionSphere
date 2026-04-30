@@ -49,9 +49,12 @@ contract ElectionManager is AccessControl {
     error CandidateInactive(uint256 candidateId);
     error DuplicateRegistration(address voter);
     error VoterNotRegistered(address voter);
+    error VoterAlreadyVoted(address voter);
     error DuplicateVote(address voter);
     error ZeroAddress();
     error InvalidTransition(ElectionState currentState, ElectionState requestedState);
+    error EmptyCandidateName();
+    error ActionNotAllowedInState(ElectionState currentState);
 
     constructor(string memory initialName, string memory initialDescription, address initialAdmin) {
         if (initialAdmin == address(0)) {
@@ -86,6 +89,35 @@ contract ElectionManager is AccessControl {
         _;
     }
 
+    function _isWhitespace(bytes1 char) private pure returns (bool) {
+        return char == 0x20 || char == 0x09 || char == 0x0A || char == 0x0D;
+    }
+
+    function _isBlank(string calldata value) private pure returns (bool) {
+        bytes calldata raw = bytes(value);
+        if (raw.length == 0) {
+            return true;
+        }
+
+        for (uint256 i = 0; i < raw.length; i++) {
+            if (!_isWhitespace(raw[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function _ensureMutableSetupWindow() private view {
+        if (
+            currentState == ElectionState.VotingOpen ||
+            currentState == ElectionState.VotingClosed ||
+            currentState == ElectionState.ResultsPublished
+        ) {
+            revert ActionNotAllowedInState(currentState);
+        }
+    }
+
     function updateElectionMetadata(string calldata name, string calldata description) external onlyElectionAdmin {
         electionName = name;
         electionDescription = description;
@@ -100,6 +132,9 @@ contract ElectionManager is AccessControl {
     }
 
     function revokeRegistrar(address account) external onlyElectionAdmin {
+        if (account == address(0)) {
+            revert ZeroAddress();
+        }
         _revokeRole(REGISTRAR_ROLE, account);
     }
 
@@ -109,13 +144,10 @@ contract ElectionManager is AccessControl {
         string calldata manifesto,
         string calldata imageUri
     ) external onlyElectionAdmin {
-        if (
-            currentState == ElectionState.VotingOpen ||
-            currentState == ElectionState.VotingClosed ||
-            currentState == ElectionState.ResultsPublished
-        ) {
-            revert InvalidTransition(currentState, currentState);
+        if (_isBlank(name)) {
+            revert EmptyCandidateName();
         }
+        _ensureMutableSetupWindow();
 
         uint256 newId = ++candidateCount;
         candidates[newId] = Candidate({
@@ -139,13 +171,10 @@ contract ElectionManager is AccessControl {
         string calldata imageUri,
         bool active
     ) external onlyElectionAdmin {
-        if (
-            currentState == ElectionState.VotingOpen ||
-            currentState == ElectionState.VotingClosed ||
-            currentState == ElectionState.ResultsPublished
-        ) {
-            revert InvalidTransition(currentState, currentState);
+        if (_isBlank(name)) {
+            revert EmptyCandidateName();
         }
+        _ensureMutableSetupWindow();
 
         Candidate storage candidate = candidates[candidateId];
         if (candidate.id == 0) {
@@ -165,13 +194,7 @@ contract ElectionManager is AccessControl {
         if (voter == address(0)) {
             revert ZeroAddress();
         }
-        if (
-            currentState == ElectionState.VotingOpen ||
-            currentState == ElectionState.VotingClosed ||
-            currentState == ElectionState.ResultsPublished
-        ) {
-            revert InvalidTransition(currentState, currentState);
-        }
+        _ensureMutableSetupWindow();
         if (registeredVoters[voter]) {
             revert DuplicateRegistration(voter);
         }
@@ -182,15 +205,15 @@ contract ElectionManager is AccessControl {
     }
 
     function removeVoter(address voter) external onlyRegistrar {
+        if (voter == address(0)) {
+            revert ZeroAddress();
+        }
+        _ensureMutableSetupWindow();
         if (!registeredVoters[voter]) {
             revert VoterNotRegistered(voter);
         }
-        if (
-            currentState == ElectionState.VotingOpen ||
-            currentState == ElectionState.VotingClosed ||
-            currentState == ElectionState.ResultsPublished
-        ) {
-            revert InvalidTransition(currentState, currentState);
+        if (hasVoted[voter]) {
+            revert VoterAlreadyVoted(voter);
         }
 
         registeredVoters[voter] = false;

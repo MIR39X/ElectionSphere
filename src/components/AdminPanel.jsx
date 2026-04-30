@@ -257,7 +257,7 @@ export function AdminPanel({
                   <strong>Candidates ({candidates.length})</strong>
                   <span>Active nominees</span>
                 </div>
-                <div className="entity-list candidate-list">
+                <div className={`entity-list candidate-list ${candidates.length > 3 ? "candidate-list-scroll" : ""}`}>
                   {candidates.map((candidate) => (
                     <div className="entity-row candidate-row" key={candidate.id}>
                       <span className="candidate-avatar">{candidate.name.slice(0, 1)}</span>
