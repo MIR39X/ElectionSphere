@@ -9,7 +9,18 @@
 
 ElectionSphere combines a polished React dashboard with a Solidity smart contract that manages candidates, voter registration, election phases, and one-wallet-one-vote enforcement.
 
-## ✨ Features
+## Course Project
+
+This repository contains our project proposal implementation for the **Blockchain and Cryptocurrency** course.
+
+| Student | ID |
+| --- | --- |
+| Arsalan Mir | 23K2085 |
+| Ahmed Raza | 22K4780 |
+
+Project proposal title: **Blockchain-based Secure Voting System**
+
+## Features
 
 - **Wallet voting**: MetaMask-based voter access with Sepolia support
 - **Role control**: Admin and registrar permissions using OpenZeppelin AccessControl
@@ -19,7 +30,7 @@ ElectionSphere combines a polished React dashboard with a Solidity smart contrac
 - **Live dashboard**: Election status, turnout, vote totals, activity feed, and results chart
 - **Smart contract tests**: Hardhat test coverage for core voting rules
 
-## 🧱 Tech Stack
+## Tech Stack
 
 | Layer | Tools |
 | --- | --- |
@@ -28,7 +39,7 @@ ElectionSphere combines a polished React dashboard with a Solidity smart contrac
 | Security | OpenZeppelin AccessControl |
 | Network | Ethereum Sepolia |
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 contracts/   Solidity smart contracts
@@ -39,7 +50,7 @@ docs/        Report, architecture, and demo notes
 public/      Static browser assets
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 Install dependencies:
 
@@ -60,7 +71,7 @@ npm run compile
 npm test
 ```
 
-## ⚙️ Environment Setup
+## Environment Setup
 
 Copy `.env.example` to `.env` and configure:
 
@@ -82,6 +93,6 @@ npm run deploy:sepolia
 
 After deployment, paste the contract address into `VITE_CONTRACT_ADDRESS` and restart the Vite dev server.
 
-## 🔐 Security Notes
+## Security Notes
 
 ElectionSphere enforces voter eligibility and duplicate-vote prevention on-chain. Wallet transactions are public on the blockchain, so this version is designed for transparent elections and academic demonstrations, not anonymous production voting.
