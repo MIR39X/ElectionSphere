@@ -144,16 +144,16 @@ export function useElectionData() {
 
   async function runWrite(action, successMessage) {
     if (usingFallback) {
-      setNotice("Demo mode is active. Deploy contract and set VITE_CONTRACT_ADDRESS for live transactions.");
-      return;
+      setError("Contract address is not configured. Set VITE_CONTRACT_ADDRESS in .env.");
+      return false;
     }
     if (!wallet) {
       setError("Connect MetaMask first.");
-      return;
+      return false;
     }
     if (!onSupportedChain) {
       setError(`Switch to ${REQUIRED_CHAIN_NAME} before sending transactions.`);
-      return;
+      return false;
     }
 
     setIsLoading(true);
@@ -165,8 +165,10 @@ export function useElectionData() {
       await tx.wait();
       setNotice(successMessage);
       await refreshContractState();
+      return true;
     } catch (txError) {
       setError(txError.shortMessage || txError.message);
+      return false;
     } finally {
       setIsLoading(false);
     }

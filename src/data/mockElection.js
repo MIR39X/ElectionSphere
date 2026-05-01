@@ -1,41 +1,14 @@
 export const candidateSeed = [
-  {
-    id: 1,
-    name: "Ayesha Noor",
-    party: "Unity Front",
-    manifesto: "Digital attendance, transparent budgets, and faster grievance support.",
-    imageUri: "",
-    voteCount: 128,
-    active: true,
-  },
-  {
-    id: 2,
-    name: "Bilal Khan",
-    party: "Progress Bloc",
-    manifesto: "Safer transport, more lab hours, and club funding reform.",
-    imageUri: "",
-    voteCount: 104,
-    active: true,
-  },
-  {
-    id: 3,
-    name: "Maya Ali",
-    party: "Future Voice",
-    manifesto: "Merit scholarships, AI learning labs, and student startup grants.",
-    imageUri: "",
-    voteCount: 87,
-    active: true,
-  },
+  
 ];
 
 export const defaultElection = {
-  electionName: "Campus Blockchain Election 2026",
-  electionDescription:
-    "Professional e-voting workflow with on-chain validation, admin controls, and live transparency.",
-  currentState: 2,
-  candidateCount: candidateSeed.length,
-  registeredVoterCount: 402,
-  totalVotesCast: 319,
+  electionName: "ElectionSphere Election",
+  electionDescription: "Connect MetaMask to load live election data from the smart contract.",
+  currentState: 0,
+  candidateCount: 0,
+  registeredVoterCount: 0,
+  totalVotesCast: 0,
 };
 
 export const stateLabels = [

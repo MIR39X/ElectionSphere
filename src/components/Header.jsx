@@ -4,7 +4,6 @@ export function Header({
   onConnect,
   onSwitchChain,
   onSupportedChain,
-  usingFallback,
   requiredNetwork,
 }) {
   return (
@@ -30,7 +29,7 @@ export function Header({
           </button>
         ) : null}
         <button className="primary-button" onClick={onConnect} disabled={isLoading}>
-          {wallet ? "Reconnect MetaMask" : usingFallback ? "Connect MetaMask (Demo)" : "Connect MetaMask"}
+          {wallet ? "Reconnect MetaMask" : "Connect MetaMask"}
         </button>
       </div>
     </header>

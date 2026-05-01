@@ -19,7 +19,6 @@ function StatCard({ icon: Icon, label, value, tone = "default" }) {
 
 export function DashboardView({ election, totals, stateLabels, candidates, isAdmin, onAdvanceState }) {
   const leadingCandidate = totals.leadingCandidate;
-  const lastVoteLabel = election.totalVotesCast > 0 ? "Demo live" : "No votes yet";
   const statusLabel = stateLabels[election.currentState];
 
   const activity = [
@@ -30,18 +29,30 @@ export function DashboardView({ election, totals, stateLabels, candidates, isAdm
 
   return (
     <main className="dashboard-page">
-      <section className="status-strip">
-        <div className="status-strip-left">
-          <span className="live-pill"><span />{statusLabel}</span>
-          <span>Last update: {lastVoteLabel}</span>
-        </div>
-      </section>
+      <section className="dashboard-top-strip dashboard-card">
+        {isAdmin ? (
+          <div className="quick-actions quick-actions-top">
+            <button className="secondary-button compact" disabled={election.currentState >= 3} onClick={() => onAdvanceState(3)}>
+              <Pause size={16} /> End Voting
+            </button>
+            <button className="secondary-button compact" disabled={election.currentState >= 4} onClick={() => onAdvanceState(4)}>
+              <Square size={16} /> Publish Results
+            </button>
+            <NavLink className="secondary-button compact" to="/results">
+              <Crown size={16} /> Full Results
+            </NavLink>
+            <NavLink className="secondary-button compact" to="/admin">
+              <Settings size={16} /> Candidates
+            </NavLink>
+          </div>
+        ) : null}
 
-      <section className="dashboard-stats-grid">
-        <StatCard icon={Gauge} label="Election Status" value={statusLabel} tone="success" />
-        <StatCard icon={Users} label="Registered Voters" value={election.registeredVoterCount} />
-        <StatCard icon={Vote} label="Votes Cast" value={election.totalVotesCast} />
-        <StatCard icon={BarChart3} label="Turnout" value={`${totals.turnoutRate}%`} />
+        <div className="dashboard-stats-grid">
+          <StatCard icon={Gauge} label="Election Status" value={statusLabel} tone="success" />
+          <StatCard icon={Users} label="Registered Voters" value={election.registeredVoterCount} />
+          <StatCard icon={Vote} label="Votes Cast" value={election.totalVotesCast} />
+          <StatCard icon={BarChart3} label="Turnout" value={`${totals.turnoutRate}%`} />
+        </div>
       </section>
 
       <section className="dashboard-main-grid">
@@ -99,30 +110,6 @@ export function DashboardView({ election, totals, stateLabels, candidates, isAdm
         </aside>
       </section>
 
-      {isAdmin ? (
-        <section className="dashboard-card quick-actions-card">
-          <div className="dashboard-section-header">
-            <div>
-              <span className="eyebrow">Admin</span>
-              <h2>Quick actions</h2>
-            </div>
-          </div>
-          <div className="quick-actions">
-            <button className="secondary-button" disabled={election.currentState >= 3} onClick={() => onAdvanceState(3)}>
-              <Pause size={17} /> End Voting
-            </button>
-            <button className="secondary-button" disabled={election.currentState >= 4} onClick={() => onAdvanceState(4)}>
-              <Square size={17} /> Publish Results
-            </button>
-            <NavLink className="secondary-button" to="/results">
-              <Crown size={17} /> View Full Results
-            </NavLink>
-            <NavLink className="secondary-button" to="/admin">
-              <Settings size={17} /> Manage Candidates
-            </NavLink>
-          </div>
-        </section>
-      ) : null}
     </main>
   );
 }

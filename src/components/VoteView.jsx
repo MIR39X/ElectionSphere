@@ -235,11 +235,9 @@ export function VoteView({
             </div>
           </div>
 
-          <p className="vote-state-hint">{submitState.reason}</p>
-          <p className="vote-safety-note">
-            Your vote will be submitted on-chain and cannot be changed after confirmation.
+          <p className={`vote-state-hint ${hasVoted ? "submitted" : submitState.disabled ? "blocked" : "ready"}`}>
+            {submitState.reason}
           </p>
-
           <div className="vote-panel-actions">
             {primaryAction === "connect" ? (
               <button className="primary-button" onClick={onConnect} disabled={isLoading}>

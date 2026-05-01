@@ -12,7 +12,6 @@ export function AdminPanel({
   election,
   stateLabels,
   candidates,
-  wallet,
   isAdmin,
   isRegistrar,
   onAddCandidate,
@@ -22,16 +21,14 @@ export function AdminPanel({
   onRevokeRegistrar,
   onDeactivateCandidate,
   onAdvanceState,
-  onConnect,
 }) {
   const [candidateForm, setCandidateForm] = useState(initialCandidate);
   const [voterAddress, setVoterAddress] = useState("");
   const [registrarAddress, setRegistrarAddress] = useState("");
   const [trackedVoters, setTrackedVoters] = useState([]);
   const [trackedRegistrars, setTrackedRegistrars] = useState([]);
-  const [inlineMessage, setInlineMessage] = useState("");
 
-  const canManageCandidates = isAdmin;
+  const canManageCandidates = isAdmin && election.currentState < 2;
   const canManageVoters = isAdmin || isRegistrar;
   const currentStateLabel = stateLabels[election.currentState];
   const nextStateIndex = election.currentState + 1;
@@ -67,28 +64,6 @@ export function AdminPanel({
 
   return (
     <div className="admin-console">
-      <section className="admin-status-strip">
-        <div className="access-item">
-          <span className="live-pill"><span />{wallet ? "Admin Connected" : "Wallet Required"}</span>
-          <strong>{shortAddress(wallet)}</strong>
-        </div>
-        <div className="access-item">
-          <span>Role</span>
-          <strong>{isAdmin ? "Admin" : isRegistrar ? "Registrar" : "Viewer"}</strong>
-        </div>
-        <div className="access-item">
-          <span>Election State</span>
-          <strong>{currentStateLabel}</strong>
-        </div>
-        {!wallet ? (
-          <button className="primary-button compact" onClick={onConnect}>
-            Connect Wallet
-          </button>
-        ) : null}
-      </section>
-
-      {inlineMessage ? <div className="admin-inline-message">{inlineMessage}</div> : null}
-
       <section className="admin-layout">
         <div className="admin-left-column">
           <article className="admin-card control-card">
@@ -154,10 +129,11 @@ export function AdminPanel({
               <button
                 className="primary-button"
                 disabled={!isAdmin}
-                onClick={() => {
-                  onGrantRegistrar(registrarAddress);
-                  setTrackedRegistrars((items) => trackUnique(items, registrarAddress));
-                  setInlineMessage("Registrar access submitted.");
+                onClick={async () => {
+                  const ok = await onGrantRegistrar(registrarAddress);
+                  if (ok) {
+                    setTrackedRegistrars((items) => trackUnique(items, registrarAddress));
+                  }
                 }}
               >
                 Grant
@@ -188,10 +164,11 @@ export function AdminPanel({
                       <button
                         className="danger-button slim-button"
                         disabled={!isAdmin}
-                        onClick={() => {
-                          onRevokeRegistrar(registrar);
-                          setTrackedRegistrars((items) => items.filter((item) => item !== registrar));
-                          setInlineMessage("Registrar revoke submitted.");
+                        onClick={async () => {
+                          const ok = await onRevokeRegistrar(registrar);
+                          if (ok) {
+                            setTrackedRegistrars((items) => items.filter((item) => item !== registrar));
+                          }
                         }}
                       >
                         Revoke
@@ -240,12 +217,27 @@ export function AdminPanel({
                   onChange={(event) => setCandidateForm({ ...candidateForm, imageUri: event.target.value })}
                 />
                 <button
-                  className="primary-button"
+                  className="primary-button add-candidate-btn"
                   disabled={!canManageCandidates}
-                  onClick={() => {
-                    onAddCandidate(candidateForm);
-                    setCandidateForm(initialCandidate);
-                    setInlineMessage("Candidate submission sent.");
+                  data-tooltip={
+                    !isAdmin
+                      ? "Only admin can add candidates."
+                      : election.currentState >= 2
+                        ? "Candidates can be added before voting opens."
+                        : ""
+                  }
+                  aria-label={
+                    !isAdmin
+                      ? "Only admin can add candidates."
+                      : election.currentState >= 2
+                        ? "Candidates can be added before voting opens."
+                        : "Add candidate"
+                  }
+                  onClick={async () => {
+                    const ok = await onAddCandidate(candidateForm);
+                    if (ok) {
+                      setCandidateForm(initialCandidate);
+                    }
                   }}
                 >
                   Add Candidate
@@ -266,15 +258,25 @@ export function AdminPanel({
                         <span>{candidate.party}</span>
                       </div>
                       <div className="row-actions">
-                        <span className={candidate.active ? "status-tag" : "status-tag muted-tag"}>
-                          {candidate.active ? "Active" : "Inactive"}
-                        </span>
                         <button
                           className="danger-button slim-button"
                           disabled={!canManageCandidates || !candidate.active}
-                          onClick={() => {
-                            onDeactivateCandidate(candidate);
-                            setInlineMessage("Candidate deactivation submitted.");
+                          data-tooltip={
+                            !isAdmin
+                              ? "Only admin can remove candidates."
+                              : election.currentState >= 2
+                                ? "Candidate removal is allowed before voting opens."
+                                : ""
+                          }
+                          aria-label={
+                            !isAdmin
+                              ? "Only admin can remove candidates."
+                              : election.currentState >= 2
+                                ? "Candidate removal is allowed before voting opens."
+                                : "Remove candidate"
+                          }
+                          onClick={async () => {
+                            await onDeactivateCandidate(candidate);
                           }}
                         >
                           Remove
@@ -305,10 +307,11 @@ export function AdminPanel({
               <button
                 className="primary-button"
                 disabled={!canManageVoters}
-                onClick={() => {
-                  onRegisterVoter(voterAddress);
-                  setTrackedVoters((items) => trackUnique(items, voterAddress));
-                  setInlineMessage("Voter registration submitted.");
+                onClick={async () => {
+                  const ok = await onRegisterVoter(voterAddress);
+                  if (ok) {
+                    setTrackedVoters((items) => trackUnique(items, voterAddress));
+                  }
                 }}
               >
                 Register
@@ -332,10 +335,11 @@ export function AdminPanel({
                     <button
                       className="danger-button"
                       disabled={!canManageVoters}
-                      onClick={() => {
-                        onRemoveVoter(voter);
-                        setTrackedVoters((items) => items.filter((item) => item !== voter));
-                        setInlineMessage("Voter removal submitted.");
+                      onClick={async () => {
+                        const ok = await onRemoveVoter(voter);
+                        if (ok) {
+                          setTrackedVoters((items) => items.filter((item) => item !== voter));
+                        }
                       }}
                     >
                       Remove
